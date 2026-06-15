@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识库管理 - 原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --brand-primary: #00c6f3;
+            --brand-hover: #00b4fa;
+            --danger: #f5222d;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-tertiary: #999;
+            --page-bg: #f0f2f5;
+            --surface: #fff;
+            --border: #e8e8e8;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-primary);
+            background: var(--page-bg);
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+        
+        .btn-primary:hover {
+            background: var(--brand-hover);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-default {
+            background: white;
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-default:hover {
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .tag-public {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .tag-internal {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+        
+        .tag-secret {
+            background: #fff1f0;
+            color: var(--danger);
+        }
+        
+        .tag-role-admin {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .tag-role-viewer {
+            background: #f5f5f5;
+            color: var(--text-tertiary);
+        }
+        
+        .tag-success {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+        
+        .tag-processing {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+        
+        .tag-failed {
+            background: #fff2f0;
+            color: var(--danger);
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+        }
+        
+        .modal-close:hover {
+            background: var(--page-bg);
+        }
+        
+        .modal-body {
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+        
+        .input:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 2px rgba(0, 198, 243, 0.1);
+        }
+        
+        .select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .select:focus {
+            border-color: var(--brand-primary);
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--brand-primary);
+            background: rgba(0, 198, 243, 0.02);
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            min-width: 160px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.15s ease;
+        }
+        
+        .dropdown-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--page-bg);
+        }
+        
+        .dropdown-item.danger {
+            color: var(--danger);
+        }
+        
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+        
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .toast {
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .toast-success {
+            background: #52c41a;
+        }
+        
+        .toast-info {
+            background: var(--brand-primary);
+        }
+        
+        .toast-error {
+            background: var(--danger);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+        
+        .tab.active {
+            color: var(--brand-primary);
+            border-bottom-color: var(--brand-primary);
+        }
+        
+        .tab:hover:not(.active) {
+            color: var(--text-primary);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #fafafa;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        
+        tr:hover td {
+            background: #fafafa;
+        }
+        
+        .switch {
+            width: 36px;
+            height: 20px;
+            background: #ccc;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .switch.active {
+            background: var(--brand-primary);
+        }
+        
+        .switch::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        
+        .switch.active::after {
+            transform: translateX(16px);
+        }
+        
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--brand-primary);
+            cursor: pointer;
+        }
+        
+        .checkbox:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        
+        .breadcrumb a {
+            color: var(--brand-primary);
+            cursor: pointer;
+        }
+        
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--brand-primary);
+            transition: width 0.3s ease;
+        }
+        
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .file-word {
+            background: #2b579a;
+        }
+        
+        .file-pdf {
+            background: #e53935;
+        }
+        
+        .file-audio {
+            background: #7b1fa2;
+        }
+        
+        .file-excel {
+            background: #217346;
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- 顶部导航栏 -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="text-lg font-semibold" style="color: var(--brand-primary)">智能翻译系统</div>
+                <nav class="flex gap-1 ml-8">
+                    <button class="px-4 py-2 text-sm rounded hover:bg-gray-100">项目中心</button>
+                    <button class="px-4 py-2 text-sm rounded bg-gray-100 font-medium" style="color: var(--brand-primary)">语言资产</button>
+                    <button class="px-4 py-2 text-sm rounded hover:bg-gray-100">翻译任务</button>
+                    <button class="px-4 py-2 text-sm rounded hover:bg-gray-100">系统设置</button>
+                </nav>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-600">管理员</span>
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">A</div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="max-w-7xl mx-auto px-6 py-6">
+        <!-- 页面1: 知识库列表 -->
+        <div id="pageLibrary" class="page active">
+            <div class="flex items-center justify-between mb-6">
+                <div class="tabs" style="border: none; margin: 0;">
+                    <div class="tab" style="border: none;">术语库</div>
+                    <div class="tab" style="border: none;">语料库</div>
+                    <div class="tab active" style="border-bottom: 2px solid var(--brand-primary); color: var(--brand-primary);">知识库</div>
+                </div>
+                <button class="btn-primary" onclick="openModal('modalCreate')">
+                    <span>+ 新建库</span>
+                </button>
+            </div>
+            
+            <!-- 搜索筛选区 -->
+            <div class="bg-white rounded-lg p-4 mb-6 flex items-center gap-4">
+                <input type="text" class="input" style="max-width: 320px" placeholder="搜索库名、知识点、概要..." id="searchInput">
+                <button class="btn-default" onclick="searchLibraries()">查询</button>
+                <button class="btn-default" onclick="resetSearch()">重置</button>
+                <div class="flex-1"></div>
+                <div class="dropdown">
+                    <button class="btn-default" onclick="toggleDropdown('sortDropdown')">
+                        <span>默认排序</span>
+                        <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="sortDropdown">
+                        <div class="dropdown-item">默认排序</div>
+                        <div class="dropdown-item">创建时间降序</div>
+                        <div class="dropdown-item">创建时间升序</div>
+                        <div class="dropdown-item">更新时间降序</div>
+                        <div class="dropdown-item">更新时间升序</div>
+                        <div class="dropdown-item">库名称升序</div>
+                        <div class="dropdown-item">库名称降序</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 知识库卡片网格 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="libraryGrid">
+                <!-- 知识库卡片由 JS 动态生成 -->
+            </div>
+            
+            <div class="empty-state hidden" id="emptyState">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <p>暂无匹配的知识库</p>
+            </div>
+        </div>
+        
+        <!-- 页面2: 知识库详情 - 文档解析列表 -->
+        <div id="pageDetail" class="page">
+            <div class="breadcrumb">
+                <a onclick="goToPage('pageLibrary')">语言资产</a>
+                <span>/</span>
+                <span>知识库</span>
+                <span>/</span>
+                <span id="currentLibraryName">手持通讯器产品说明</span>
+            </div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-xl font-semibold m-0" id="detailLibraryName">手持通讯器产品说明-项目知识库</h1>
+                    <span class="tag tag-public" id="detailLibraryLevel">公开</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="btn-default" onclick="showToast('协作功能开发中，敬请期待', 'info')">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        协作
+                    </button>
+                    <button class="btn-primary" onclick="openModal('modalPublish')">发布知识</button>
+                    <div class="dropdown">
+                        <button class="btn-default" onclick="toggleDropdown('moreDropdown')">
+                            <span>更多操作</span>
+                            <svg class="inline w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="moreDropdown">
+                            <div class="dropdown-item" onclick="openModal('modalEdit')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                编辑信息
+                            </div>
+                            <div class="dropdown-item" onclick="openModal('modalRecords')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                                导入导出记录
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item danger" onclick="confirmEmptyLibrary()">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                清空库
+                            </div>
+                            <div class="dropdown-item danger" onclick="confirmDeleteLibrary()">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                </svg>
+                                删除库
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 文档搜索 -->
+            <div class="bg-white rounded-lg p-4 mb-4 flex items-center gap-4">
+                <input type="text" class="input" style="max-width: 320px" placeholder="搜索文件名、知识点、概要...">
+                <button class="btn-default">查询</button>
+            </div>
+            
+            <!-- 文档表格 -->
+            <div class="bg-white rounded-lg overflow-hidden">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 60px">类型</th>
+                            <th style="width: 200px">文件名</th>
+                            <th style="width: 80px">密级</th>
+                            <th style="width: 80px">语种</th>
+                            <th>概要</th>
+                            <th style="width: 150px">知识点</th>
+                            <th style="width: 100px">状态</th>
+                            <th style="width: 150px">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="documentTableBody">
+                        <!-- 文档行由 JS 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 页面3: 切片内容管理 -->
+        <div id="pageChunks" class="page">
+            <div class="breadcrumb">
+                <a onclick="goToPage('pageLibrary')">语言资产</a>
+                <span>/</span>
+                <a onclick="goToPage('pageDetail')">知识库</a>
+                <span>/</span>
+                <span>切片内容</span>
+            </div>
+            
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <button class="btn-default" onclick="goToPage('pageDetail')">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        返回
+                    </button>
+                    <h1 class="text-xl font-semibold m-0">第12届北京国际电影节天坛奖相关手册译文</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="btn-default" id="btnBatchDelete" disabled onclick="batchDeleteChunks()">批量删除</button>
+                    <button class="btn-primary" onclick="openModal('modalChunkCreate')">+ 新增切片</button>
+                </div>
+            </div>
+            
+            <!-- 切片筛选 -->
+            <div class="bg-white rounded-lg p-4 mb-4 flex items-center gap-4">
+                <select class="select" style="max-width: 150px">
+                    <option>全部状态</option>
+                    <option>已启用</option>
+                    <option>已停用</option>
+                </select>
+                <input type="text" class="input" style="max-width: 320px" placeholder="搜索切片内容...">
+                <button class="btn-default">查询</button>
+                <div class="text-sm text-gray-500">共 <span id="chunkCount">12</span> 个切片，已选择 <span id="selectedChunkCount">0</span> 个</div>
+            </div>
+            
+            <!-- 切片表格 -->
+            <div class="bg-white rounded-lg overflow-hidden">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px">
+                                <input type="checkbox" class="checkbox" onchange="toggleAllChunks(this)" id="selectAllChunks">
+                            </th>
+                            <th style="width: 60px">序号</th>
+                            <th>切片内容</th>
+                            <th style="width: 80px">图片</th>
+                            <th style="width: 100px">启用状态</th>
+                            <th style="width: 120px">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chunkTableBody">
+                        <!-- 切片行由 JS 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 弹窗: 新建知识库 -->
+    <div class="modal-overlay" id="modalCreate">
+        <div class="modal" style="max-width: 700px">
+            <div class="modal-header">
+                <h3 class="modal-title">新建知识库</h3>
+                <button class="modal-close" onclick="closeModal('modalCreate')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">库名称 <span class="text-red-500">*</span></label>
+                        <input type="text" class="input" placeholder="请输入知识库名称" id="newLibraryName">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">涉密等级 <span class="text-red-500">*</span></label>
+                        <select class="select" id="newLibraryLevel">
+                            <option value="public">公开</option>
+                            <option value="internal">内部</option>
+                            <option value="secret">秘密</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">上传文件</label>
+                        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-gray-500 mb-2">点击或拖拽文件到此处上传</p>
+                            <p class="text-xs text-gray-400">支持 doc, docx, pdf, xlsx, pptx, jpg, png, mp3 等格式，单个文件不超过 100MB</p>
+                            <input type="file" id="fileInput" class="hidden" multiple>
+                        </div>
+                        <div class="mt-4" id="uploadFileList">
+                            <!-- 上传文件列表 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalCreate')">取消</button>
+                <button class="btn-primary" onclick="createLibrary()">创建</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗: 发布知识 -->
+    <div class="modal-overlay" id="modalPublish">
+        <div class="modal" style="max-width: 700px">
+            <div class="modal-header">
+                <h3 class="modal-title">发布知识</h3>
+                <button class="modal-close" onclick="closeModal('modalPublish')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-area" onclick="showToast('文件选择功能演示', 'info')">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="text-gray-500 mb-2">点击或拖拽文件到此处上传</p>
+                    <p class="text-xs text-gray-400">支持 doc, docx, pdf, xlsx, pptx, jpg, png, mp3 等格式</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalPublish')">取消</button>
+                <button class="btn-primary" onclick="publishKnowledge()">发布</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗: 编辑知识库 -->
+    <div class="modal-overlay" id="modalEdit">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑知识库</h3>
+                <button class="modal-close" onclick="closeModal('modalEdit')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">库名称</label>
+                        <input type="text" class="input" value="手持通讯器产品说明-项目知识库">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">涉密等级</label>
+                        <select class="select" disabled>
+                            <option>公开</option>
+                            <option>内部</option>
+                            <option>秘密</option>
+                        </select>
+                        <p class="text-xs text-gray-400 mt-1">涉密等级创建后不可修改</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalEdit')">取消</button>
+                <button class="btn-primary" onclick="saveLibraryEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗: 导入导出记录 -->
+    <div class="modal-overlay" id="modalRecords">
+        <div class="modal" style="max-width: 900px">
+            <div class="modal-header">
+                <h3 class="modal-title">导入导出记录</h3>
+                <button class="modal-close" onclick="closeModal('modalRecords')">✕</button>
+            </div>
+            <div class="modal-body" style="padding-top: 16px; padding-bottom: 0;">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchRecordTab(this, 'import')">导入记录</div>
+                    <div class="tab" onclick="switchRecordTab(this, 'export')">导出记录</div>
+                </div>
+                <div style="margin: 0 -24px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 60px">序号</th>
+                                <th>文件名</th>
+                                <th style="width: 80px">密级</th>
+                                <th style="width: 100px">操作人</th>
+                                <th style="width: 160px">操作时间</th>
+                                <th style="width: 100px">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordTableBody">
+                            <!-- 记录行由 JS 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalRecords')">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗: 新增切片 -->
+    <div class="modal-overlay" id="modalChunkCreate">
+        <div class="modal" style="max-width: 600px">
+            <div class="modal-header">
+                <h3 class="modal-title">新增切片</h3>
+                <button class="modal-close" onclick="closeModal('modalChunkCreate')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">切片内容 <span class="text-red-500">*</span></label>
+                        <textarea class="input" rows="6" placeholder="请输入切片内容..." id="newChunkContent"></textarea>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-medium">启用状态</label>
+                        <div class="switch active" id="newChunkSwitch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">图片附件（可选）</label>
+                        <div class="upload-area" style="padding: 20px;" onclick="showToast('图片上传功能演示', 'info')">
+                            <p class="text-sm text-gray-500">点击上传图片（支持 jpg, png, gif）</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalChunkCreate')">取消</button>
+                <button class="btn-primary" onclick="createChunk()">创建</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗: 确认删除 -->
+    <div class="modal-overlay" id="modalConfirm">
+        <div class="modal" style="max-width: 420px">
+            <div class="modal-header">
+                <h3 class="modal-title">确认操作</h3>
+                <button class="modal-close" onclick="closeModal('modalConfirm')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage" class="text-gray-600">确定要执行此操作吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-default" onclick="closeModal('modalConfirm')">取消</button>
+                <button class="btn-danger" id="confirmBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        const libraries = [
+            {
+                id: 1,
+                name: "手持通讯器产品说明-项目知识库",
+                summary: "收录手持通讯器产品说明、操作步骤、硬件参数和售后支持相关知识点。",
+                languages: ["中", "英", "法"],
+                tags: ["产品说明", "通讯器", "操作指南"],
+                level: "public",
+                docs: 20,
+                role: "admin",
+                owner: "管理员",
+                createdAt: "2026-05-15 17:02",
+                updatedAt: "2026-05-15 17:02"
+            },
+            {
+                id: 2,
+                name: "中石油西南院-项目术语库",
+                summary: "面向能源地质项目的知识库，整理院内术语、项目资料与行业表达。",
+                languages: ["中", "英", "德"],
+                tags: ["能源", "地质"],
+                level: "internal",
+                docs: 10,
+                role: "admin",
+                owner: "项目经理03",
+                createdAt: "2026-05-19 11:05",
+                updatedAt: "2026-05-19 11:05"
+            },
+            {
+                id: 3,
+                name: "一个测试库",
+                summary: "电影节与文化类知识沉淀，覆盖天坛奖相关片名、奖项、影评与活动资料。",
+                languages: ["中", "英", "法", "日", "韩"],
+                tags: ["电影", "文化", "天坛奖", "影评", "获奖影片"],
+                level: "public",
+                docs: 20,
+                role: "viewer",
+                owner: "项目经理03",
+                createdAt: "2026-05-19 11:07",
+                updatedAt: "2026-05-19 11:07"
+            },
+            {
+                id: 4,
+                name: "测试术语库",
+                summary: "用于验证知识库创建、检索、权限与标签展示流程的测试数据。",
+                languages: ["中"],
+                tags: ["测试"],
+                level: "secret",
+                docs: 20,
+                role: "admin",
+                owner: "管理员",
+                createdAt: "2026-04-01 14:15",
+                updatedAt: "2026-04-01 14:15"
+            }
+        ];
+
+        const documents = [
+            { id: 1, type: "word", name: "第12届北京国际电影节天坛奖相关手册译文.docx", level: "public", language: "中-英", summary: "这里是文档的概述，包含文档的主要内容和重点知识...", tags: ["电影节", "天坛奖"], status: "done", supportsChunk: true },
+            { id: 2, type: "pdf", name: "手持通讯器硬件规格说明书.pdf", level: "public", language: "中", summary: "包含手持通讯器的硬件参数、接口说明、性能指标等...", tags: ["硬件", "参数", "规格"], status: "done", supportsChunk: true },
+            { id: 3, type: "audio", name: "产品发布会现场录音.mp3", level: "internal", language: "中", summary: "", tags: [], status: "done", supportsChunk: false },
+            { id: 4, type: "excel", name: "配件价格清单.xlsx", level: "public", language: "中", summary: "各类配件的定价、成本价、渠道价和市场指导价...", tags: ["价格", "配件"], status: "parsing", supportsChunk: true },
+            { id: 5, type: "word", name: "售后服务流程说明.docx", level: "internal", language: "中-英", summary: "售后服务的标准流程、响应时间、处理规范...", tags: ["售后", "流程"], status: "tagging", supportsChunk: true },
+            { id: 6, type: "pdf", name: "安全操作规范.pdf", level: "secret", language: "中", summary: "设备操作的安全注意事项、风险提示...", tags: ["安全", "规范"], status: "failed", supportsChunk: true }
+        ];
+
+        const chunks = Array.from({ length: 12 }, (_, i) => ({
+            id: i + 1,
+            content: `这是第 ${i + 1} 个切片的内容。文档解析后会自动生成多个知识片段，每个片段包含相对独立的知识点内容，方便检索和复用。切片内容可以人工编辑和调整。`,
+            enabled: i < 10,
+            images: i % 3 === 0 ? 1 : 0,
+            selected: false
+        }));
+
+        const importRecords = [
+            { id: 1, fileName: "第12届北京国际电影节天坛奖相关手册译文.docx", level: "public", operator: "管理员", time: "2026-06-03 10:30:00", status: "done" },
+            { id: 2, fileName: "手持通讯器硬件规格说明书.pdf", level: "public", operator: "项目经理03", time: "2026-06-03 10:25:00", status: "done" },
+            { id: 3, fileName: "安全操作规范.pdf", level: "secret", operator: "管理员", time: "2026-06-03 10:20:00", status: "failed" }
+        ];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderLibraryGrid();
+            renderDocumentTable();
+            renderChunkTable();
+            renderImportRecords();
+        });
+
+        // 渲染知识库卡片
+        function renderLibraryGrid() {
+            const grid = document.getElementById('libraryGrid');
+            grid.innerHTML = libraries.map(lib => {
+                const levelClass = lib.level === 'public' ? 'tag-public' : lib.level === 'internal' ? 'tag-internal' : 'tag-secret';
+                const levelText = lib.level === 'public' ? '公开' : lib.level === 'internal' ? '内部' : '秘密';
+                const roleClass = lib.role === 'admin' ? 'tag-role-admin' : 'tag-role-viewer';
+                const roleText = lib.role === 'admin' ? '管理者' : '查看者';
+                
+                return `
+                    <div class="card p-5" onclick="goToLibrary(${lib.id})">
+                        <div class="flex items-start justify-between mb-3">
+                            <h3 class="font-semibold text-base m-0 line-clamp-1" title="${lib.name}">${lib.name}</h3>
+                            <input type="checkbox" class="checkbox" ${lib.role !== 'admin' ? 'disabled' : ''} onclick="event.stopPropagation()" title="${lib.role !== 'admin' ? '您没有管理权限，无法选择' : ''}">
+                        </div>
+                        <p class="text-sm text-gray-500 mb-3 line-clamp-2" title="${lib.summary}">${lib.summary}</p>
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            ${lib.languages.slice(0, 3).map(lang => `<span class="tag" style="background: #f5f5f5; color: #666;">${lang}</span>`).join('')}
+                            ${lib.languages.length > 3 ? `<span class="tag" style="background: #f5f5f5; color: #666;">+${lib.languages.length - 3}</span>` : ''}
+                        </div>
+                        <div class="flex flex-wrap gap-1 mb-4">
+                            ${lib.tags.slice(0, 4).map(tag => `<span class="tag" style="background: #f0f5ff; color: #597ef7;">${tag}</span>`).join('')}
+                            ${lib.tags.length > 4 ? `<span class="tag" style="background: #f0f5ff; color: #597ef7;">+${lib.tags.length - 4}</span>` : ''}
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div class="flex items-center gap-2">
+                                <span class="tag ${levelClass}">${levelText}</span>
+                                <span class="text-xs text-gray-400">${lib.docs} 个文档</span>
+                            </div>
+                            <span class="tag ${roleClass}">${roleText}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-2 flex justify-between">
+                            <span>创建人: ${lib.owner}</span>
+                            <span>更新于 ${lib.updatedAt.split(' ')[0]}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 渲染文档表格
+        function renderDocumentTable() {
+            const tbody = document.getElementById('documentTableBody');
+            tbody.innerHTML = documents.map(doc => {
+                const iconClass = doc.type === 'word' ? 'file-word' : doc.type === 'pdf' ? 'file-pdf' : doc.type === 'audio' ? 'file-audio' : 'file-excel';
+                const iconText = doc.type === 'word' ? 'W' : doc.type === 'pdf' ? 'P' : doc.type === 'audio' ? 'A' : 'X';
+                const levelClass = doc.level === 'public' ? 'tag-public' : doc.level === 'internal' ? 'tag-internal' : 'tag-secret';
+                const levelText = doc.level === 'public' ? '公开' : doc.level === 'internal' ? '内部' : '秘密';
+                
+                let statusTag, statusText;
+                if (doc.status === 'done') {
+                    statusTag = 'tag-success';
+                    statusText = '已完成';
+                } else if (doc.status === 'parsing') {
+                    statusTag = 'tag-processing';
+                    statusText = '解析中';
+                } else if (doc.status === 'tagging') {
+                    statusTag = 'tag-processing';
+                    statusText = '标签生成中';
+                } else {
+                    statusTag = 'tag-failed';
+                    statusText = '解析失败';
+                }
+                
+                return `
+                    <tr onclick="${doc.supportsChunk ? "goToChunks()" : "showToast('当前格式不支持查看切片', 'info')"}" style="cursor: ${doc.supportsChunk ? 'pointer' : 'default'}">
+                        <td><div class="file-icon ${iconClass}">${iconText}</div></td>
+                        <td title="${doc.name}" class="max-w-xs truncate">${doc.name}</td>
+                        <td><span class="tag ${levelClass}">${levelText}</span></td>
+                        <td>${doc.language}</td>
+                        <td class="max-w-md truncate" title="${doc.summary}">${doc.summary || '-'}</td>
+                        <td>
+                            <div class="flex flex-wrap gap-1">
+                                ${doc.tags.map(tag => `<span class="tag" style="background: #f0f5ff; color: #597ef7; font-size: 11px;">${tag}</span>`).join('')}
+                            </div>
+                        </td>
+                        <td><span class="tag ${statusTag}">${statusText}</span></td>
+                        <td>
+                            <div class="flex gap-2" onclick="event.stopPropagation()">
+                                ${doc.supportsChunk ? `<button class="text-sm text-blue-500 hover:text-blue-600" onclick="showToast('预览功能演示', 'info')">预览</button>` : ''}
+                                <button class="text-sm text-red-500 hover:text-red-600" onclick="confirmDeleteDocument()">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 渲染切片表格
+        function renderChunkTable() {
+            const tbody = document.getElementById('chunkTableBody');
+            tbody.innerHTML = chunks.map(chunk => `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="checkbox chunk-checkbox" ${chunk.selected ? 'checked' : ''} onchange="toggleChunkSelect(${chunk.id})">
+                    </td>
+                    <td>${chunk.id}</td>
+                    <td class="max-w-md" title="${chunk.content}">
+                        <div class="line-clamp-2">${chunk.content}</div>
+                    </td>
+                    <td>${chunk.images > 0 ? `<span class="text-blue-500">${chunk.images} 张</span>` : '-'}</td>
+                    <td>
+                        <div class="switch ${chunk.enabled ? 'active' : ''}" onclick="toggleChunkEnabled(${chunk.id}, this)"></div>
+                    </td>
+                    <td>
+                        <div class="flex gap-2">
+                            <button class="text-sm text-blue-500 hover:text-blue-600" onclick="showToast('编辑功能演示', 'info')">编辑</button>
+                            <button class="text-sm text-red-500 hover:text-red-600" onclick="confirmDeleteChunk()">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            updateChunkSelectionCount();
+        }
+
+        // 渲染导入记录
+        function renderImportRecords() {
+            const tbody = document.getElementById('recordTableBody');
+            tbody.innerHTML = importRecords.map(record => {
+                const levelClass = record.level === 'public' ? 'tag-public' : record.level === 'internal' ? 'tag-internal' : 'tag-secret';
+                const levelText = record.level === 'public' ? '公开' : record.level === 'internal' ? '内部' : '秘密';
+                const statusClass = record.status === 'done' ? 'tag-success' : 'tag-failed';
+                const statusText = record.status === 'done' ? '已完成' : '解析失败';
+                
+                return `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td class="max-w-xs truncate" title="${record.fileName}">${record.fileName}</td>
+                        <td><span class="tag ${levelClass}">${levelText}</span></td>
+                        <td>${record.operator}</td>
+                        <td>${record.time}</td>
+                        <td><span class="tag ${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 页面导航
+        function goToPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            closeAllDropdowns();
+        }
+
+        function goToLibrary(id) {
+            const lib = libraries.find(l => l.id === id);
+            if (lib) {
+                document.getElementById('currentLibraryName').textContent = lib.name;
+                document.getElementById('detailLibraryName').textContent = lib.name;
+                const levelEl = document.getElementById('detailLibraryLevel');
+                levelEl.className = lib.level === 'public' ? 'tag tag-public' : lib.level === 'internal' ? 'tag tag-internal' : 'tag tag-secret';
+                levelEl.textContent = lib.level === 'public' ? '公开' : lib.level === 'internal' ? '内部' : '秘密';
+            }
+            goToPage('pageDetail');
+        }
+
+        function goToChunks() {
+            goToPage('pageChunks');
+        }
+
+        // 弹窗控制
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            closeAllDropdowns();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // 点击遮罩关闭弹窗
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // 下拉菜单控制
+        function toggleDropdown(id) {
+            const menu = document.getElementById(id);
+            const isActive = menu.classList.contains('active');
+            closeAllDropdowns();
+            if (!isActive) {
+                menu.classList.add('active');
+            }
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('active');
+            });
+        }
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Toast 提示
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 开关切换
+        function toggleSwitch(el) {
+            el.classList.toggle('active');
+        }
+
+        // 记录 Tab 切换
+        function switchRecordTab(el, type) {
+            document.querySelectorAll('#modalRecords .tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            showToast(`切换到${type === 'import' ? '导入' : '导出'}记录`, 'info');
+        }
+
+        // 切片选择
+        function toggleChunkSelect(id) {
+            const chunk = chunks.find(c => c.id === id);
+            if (chunk) {
+                chunk.selected = !chunk.selected;
+            }
+            updateChunkSelectionCount();
+        }
+
+        function toggleAllChunks(checkbox) {
+            chunks.forEach(chunk => chunk.selected = checkbox.checked);
+            document.querySelectorAll('.chunk-checkbox').forEach(cb => cb.checked = checkbox.checked);
+            updateChunkSelectionCount();
+        }
+
+        function updateChunkSelectionCount() {
+            const selectedCount = chunks.filter(c => c.selected).length;
+            document.getElementById('selectedChunkCount').textContent = selectedCount;
+            document.getElementById('btnBatchDelete').disabled = selectedCount === 0;
+        }
+
+        function toggleChunkEnabled(id, el) {
+            const chunk = chunks.find(c => c.id === id);
+            if (chunk) {
+                chunk.enabled = !chunk.enabled;
+                el.classList.toggle('active');
+            }
+        }
+
+        // 操作函数
+        function searchLibraries() {
+            const query = document.getElementById('searchInput').value;
+            showToast(query ? `搜索: ${query}` : '请输入搜索关键词', 'info');
+        }
+
+        function resetSearch() {
+            document.getElementById('searchInput').value = '';
+            showToast('已重置搜索条件', 'info');
+        }
+
+        function createLibrary() {
+            const name = document.getElementById('newLibraryName').value;
+            if (!name.trim()) {
+                showToast('请输入知识库名称', 'error');
+                return;
+            }
+            closeModal('modalCreate');
+            showToast('知识库创建成功', 'success');
+        }
+
+        function publishKnowledge() {
+            closeModal('modalPublish');
+            showToast('文档上传成功，正在解析...', 'info');
+        }
+
+        function saveLibraryEdit() {
+            closeModal('modalEdit');
+            showToast('保存成功', 'success');
+        }
+
+        function createChunk() {
+            const content = document.getElementById('newChunkContent').value;
+            if (!content.trim()) {
+                showToast('请输入切片内容', 'error');
+                return;
+            }
+            closeModal('modalChunkCreate');
+            showToast('切片创建成功', 'success');
+            chunks.unshift({
+                id: chunks.length + 1,
+                content: content,
+                enabled: true,
+                images: 0,
+                selected: false
+            });
+            renderChunkTable();
+        }
+
+        function batchDeleteChunks() {
+            const count = chunks.filter(c => c.selected).length;
+            showConfirm(`确定要删除选中的 ${count} 个切片吗？`, () => {
+                showToast(`已删除 ${count} 个切片`, 'success');
+                // 实际项目中这里会删除数据
+            });
+        }
+
+        function confirmDeleteDocument() {
+            showConfirm('确定要删除该文档吗？删除后不可恢复。', () => {
+                showToast('文档已删除', 'success');
+            });
+        }
+
+        function confirmDeleteChunk() {
+            showConfirm('确定要删除该切片吗？', () => {
+                showToast('切片已删除', 'success');
+            });
+        }
+
+        function confirmEmptyLibrary() {
+            showConfirm('确定要清空该知识库吗？所有文档将被删除，此操作不可恢复。', () => {
+                showToast('知识库已清空', 'success');
+            });
+        }
+
+        function confirmDeleteLibrary() {
+            showConfirm('确定要删除该知识库吗？此操作不可恢复。', () => {
+                showToast('知识库已删除', 'success');
+                goToPage('pageLibrary');
+            });
+        }
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirmMessage').textContent = message;
+            document.getElementById('confirmBtn').onclick = function() {
+                closeModal('modalConfirm');
+                callback();
+            };
+            openModal('modalConfirm');
+        }
+
+        // ESC 关闭弹窗
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
