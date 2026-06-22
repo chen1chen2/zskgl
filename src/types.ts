@@ -9,7 +9,7 @@ export type SortKey =
   | "nameAsc"
   | "nameDesc";
 
-export type PageName = "library" | "parse" | "preview" | "chunks";
+export type PageName = "documentQuick" | "library" | "parse" | "preview" | "chunks";
 
 export interface Library {
   id: number;
