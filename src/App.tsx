@@ -74,6 +74,7 @@ type ParseStage = "done" | "parsing" | "tagging" | "failed";
 type DocumentSourceModule = "knowledgeBase" | "projectManagement" | "documentQuick";
 type ChunkModalMode = "create" | "edit";
 type ImportExportTab = "import" | "export";
+type QuickTranslateStatus = "complete" | "failed";
 
 interface ParseDocumentRow extends UploadFileItem {
   parseStage?: ParseStage;
@@ -99,6 +100,31 @@ interface ChunkImageItem {
   name: string;
   size: number;
 }
+
+interface QuickTranslateRecord {
+  id: number;
+  fileName: string;
+  level: SecurityLevel;
+  date: string;
+  language: string;
+  engine: string;
+  words: string;
+  fileStatus: QuickTranslateStatus;
+  translateStatus: QuickTranslateStatus;
+}
+
+const quickTranslateRecords: QuickTranslateRecord[] = [
+  { id: 1, fileName: "BIOS0629-109_中文原文.docx", level: "公开", date: "2026.06.15 15:55", language: "中 - 英", engine: "传神多语", words: "21087", fileStatus: "complete", translateStatus: "complete" },
+  { id: 2, fileName: "制剂的质量控制1234.docx", level: "公开", date: "2026.06.15 15:55", language: "中 - 英", engine: "传神多语", words: "7315", fileStatus: "complete", translateStatus: "complete" },
+  { id: 3, fileName: "附件1.pdf", level: "公开", date: "2026.06.12 15:35", language: "中 - 英", engine: "传神多语", words: "13134", fileStatus: "complete", translateStatus: "complete" },
+  { id: 4, fileName: "制剂的质量控制1234.pdf", level: "公开", date: "2026.06.12 13:20", language: "中 - 英", engine: "传神多语", words: "7542", fileStatus: "complete", translateStatus: "complete" },
+  { id: 5, fileName: "世界の艦船2026年5月号.pdf", level: "公开", date: "2026.06.11 18:17", language: "日 - 中", engine: "传神多语", words: "124027", fileStatus: "complete", translateStatus: "complete" },
+  { id: 6, fileName: "世界の艦船2026年5月号.pdf", level: "公开", date: "2026.06.11 16:47", language: "日 - 中", engine: "传神多语", words: "-", fileStatus: "failed", translateStatus: "failed" },
+  { id: 7, fileName: "世界の艦船2026年4月号.pdf", level: "公开", date: "2026.06.11 16:47", language: "日 - 中", engine: "传神多语", words: "122171", fileStatus: "complete", translateStatus: "complete" },
+  { id: 8, fileName: "世界の艦船2026年4月号.pdf", level: "公开", date: "2026.06.11 09:31", language: "日 - 中", engine: "传神多语", words: "-", fileStatus: "failed", translateStatus: "failed" },
+  { id: 9, fileName: "世界の艦船2026年5月号.pdf", level: "公开", date: "2026.06.11 09:31", language: "日 - 中", engine: "传神多语", words: "-", fileStatus: "failed", translateStatus: "failed" },
+  { id: 10, fileName: "01 洗碗机说明书_扫描版-1.pdf", level: "内部", date: "2026.06.04 20:56", language: "中 - 英", engine: "传神多语", words: "3977", fileStatus: "complete", translateStatus: "complete" },
+];
 
 function parseDate(value: string) {
   const [datePart, timePart = "00:00"] = value.split(" ");
@@ -174,7 +200,7 @@ function sortLibraries(items: Library[], currentSort: SortKey) {
 }
 
 function App() {
-  const [page, setPage] = useState<PageName>("library");
+  const [page, setPage] = useState<PageName>("documentQuick");
   const [keyword, setKeyword] = useState("");
   const [owner, setOwner] = useState("");
   const [currentSort, setCurrentSort] = useState<SortKey>("default");
@@ -183,6 +209,7 @@ function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [libraryName, setLibraryName] = useState("");
   const [libraryLevel, setLibraryLevel] = useState<SecurityLevel | "">("");
+  const [libraryRemark, setLibraryRemark] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragover, setIsDragover] = useState(false);
   const [activeLibrary, setActiveLibrary] = useState<Library | null>(null);
@@ -197,6 +224,7 @@ function App() {
   const [importExportOpen, setImportExportOpen] = useState(false);
   const [editLibraryName, setEditLibraryName] = useState("");
   const [editLibraryLevel, setEditLibraryLevel] = useState<SecurityLevel | "">("");
+  const [editLibraryRemark, setEditLibraryRemark] = useState("");
   const [libraryCleared, setLibraryCleared] = useState(false);
   const [deletedLibraryIds, setDeletedLibraryIds] = useState<number[]>([]);
   const [deletedParseRowIds, setDeletedParseRowIds] = useState<string[]>([]);
@@ -399,6 +427,7 @@ function App() {
     setModalOpen(false);
     setLibraryName("");
     setLibraryLevel("");
+    setLibraryRemark("");
     setUploadedFiles([]);
     Object.values(uploadTimers.current).forEach(window.clearInterval);
     uploadTimers.current = {};
@@ -418,6 +447,7 @@ function App() {
     setMoreOpen(false);
     setEditLibraryName(parseName);
     setEditLibraryLevel(parseLevel);
+    setEditLibraryRemark("");
     setEditModalOpen(true);
   }
 
@@ -644,9 +674,10 @@ function App() {
   return (
     <>
       <div className="app-shell">
-        <Sidebar />
+        <Sidebar activePage={page} onNavigate={setPage} />
         <main className="workspace">
           <Topbar />
+          {page === "documentQuick" && <DocumentQuickPage />}
           {page === "library" && (
             <LibraryListPage
               keyword={keyword}
@@ -714,6 +745,7 @@ function App() {
         <NewLibraryModal
           libraryName={libraryName}
           libraryLevel={libraryLevel}
+          libraryRemark={libraryRemark}
           uploadedFiles={uploadedFiles}
           isDragover={isDragover}
           fileInputRef={fileInputRef}
@@ -722,6 +754,7 @@ function App() {
           onSubmit={submitLibraryCreate}
           onNameChange={setLibraryName}
           onLevelChange={setLibraryLevel}
+          onRemarkChange={setLibraryRemark}
           onAddFiles={addFiles}
           onBatchSetLevel={batchSetLevel}
           onRemoveFile={removeUploadFile}
@@ -752,10 +785,12 @@ function App() {
         <EditLibraryModal
           libraryName={editLibraryName}
           libraryLevel={editLibraryLevel}
+          libraryRemark={editLibraryRemark}
           onClose={closeEditModal}
           onSubmit={submitLibraryEdit}
           onNameChange={setEditLibraryName}
           onLevelChange={setEditLibraryLevel}
+          onRemarkChange={setEditLibraryRemark}
         />
       )}
       {deleteTarget && (
@@ -805,7 +840,7 @@ function App() {
   );
 }
 
-function Sidebar() {
+function Sidebar({ activePage, onNavigate }: { activePage: PageName; onNavigate: (page: PageName) => void }) {
   return (
     <aside className="sidebar" aria-label="主导航">
       <div className="brand">
@@ -813,29 +848,29 @@ function Sidebar() {
         <span className="brand-name">智能翻译系统</span>
       </div>
       <nav className="main-nav">
-        <a className="nav-item" href="#">
+        <button className="nav-item" type="button">
           <span className="nav-icon nav-home" aria-hidden="true" />
           <span>首页</span>
-        </a>
-        <a className="nav-item" href="#">
+        </button>
+        <button className={`nav-item${activePage === "documentQuick" ? " active" : ""}`} type="button" onClick={() => onNavigate("documentQuick")}>
           <span className="nav-icon nav-doc" aria-hidden="true" />
           <span>文档快翻</span>
-        </a>
-        <a className="nav-item has-extra" href="#">
+        </button>
+        <button className="nav-item has-extra" type="button">
           <span className="nav-icon nav-folder" aria-hidden="true" />
           <span>项目管理</span>
           <span className="nav-extra" aria-hidden="true">+</span>
-        </a>
+        </button>
         <section className="nav-group" aria-label="语言资产">
           <button className="nav-item nav-parent" type="button" aria-expanded="true">
             <span className="nav-icon nav-asset" aria-hidden="true" />
             <span>语言资产</span>
             <span className="nav-extra" aria-hidden="true">⌃</span>
           </button>
-          <a className="nav-item nav-child" href="#">术语库</a>
-          <a className="nav-item nav-child" href="#">语料库</a>
-          <a className="nav-item nav-child active" href="#">知识库</a>
-          <a className="nav-item nav-child" href="#">AI工具包</a>
+          <button className="nav-item nav-child" type="button">术语库</button>
+          <button className="nav-item nav-child" type="button">语料库</button>
+          <button className={`nav-item nav-child${["library", "parse", "preview", "chunks"].includes(activePage) ? " active" : ""}`} type="button" onClick={() => onNavigate("library")}>知识库</button>
+          <button className="nav-item nav-child" type="button">AI工具包</button>
         </section>
       </nav>
     </aside>
@@ -851,8 +886,147 @@ function Topbar() {
         <input type="search" placeholder="搜索全部术语/语料" />
         <span className="search-icon" aria-hidden="true" />
       </label>
+      <span className="engine-pill">机器</span>
       <button className="avatar-btn" type="button" aria-label="用户菜单" />
     </header>
+  );
+}
+
+function DocumentQuickPage() {
+  const uploadTypes = [
+    { label: "Word", ext: "W", tone: "word" },
+    { label: "Excel", ext: "X", tone: "excel" },
+    { label: "PPT", ext: "P", tone: "ppt" },
+    { label: "WPS", ext: "W", tone: "wps" },
+    { label: "PDF", ext: "F", tone: "pdf" },
+    { label: "TXT", ext: "TXT", tone: "txt" },
+    { label: "SRT", ext: "SRT", tone: "srt" },
+    { label: "CAD", ext: "DXF", tone: "cad" },
+    { label: "XLIFF", ext: "XLIFF", tone: "xliff" },
+    { label: "ZIP", ext: "ZIP", tone: "zip" },
+    { label: "文件夹", ext: "", tone: "folder" },
+    { label: "更多格式", ext: "••", tone: "more" },
+  ];
+
+  return (
+    <section className="quick-page" aria-labelledby="documentQuickTitle">
+      <div className="quick-tabs" role="tablist" aria-label="快翻类型">
+        <button id="documentQuickTitle" className="quick-tab active" type="button" role="tab" aria-selected="true">文档翻译</button>
+        <button className="quick-tab" type="button" role="tab">文本翻译</button>
+        <button className="quick-tab" type="button" role="tab">图片翻译</button>
+      </div>
+
+      <section className="quick-upload-card" aria-label="文档上传">
+        <div className="quick-format-row" aria-label="支持格式">
+          {uploadTypes.map((item) => <QuickFormatIcon key={item.label} item={item} />)}
+        </div>
+        <h2>拖拽文档到此进行翻译</h2>
+        <p>单个文件≤1024M</p>
+        <div className="quick-upload-actions">
+          <button className="quick-upload-btn" type="button">上传文档</button>
+          <button className="quick-upload-btn" type="button">上传文件夹</button>
+        </div>
+      </section>
+
+      <section className="quick-record-section" aria-labelledby="quickRecordTitle">
+        <h2 id="quickRecordTitle"><span aria-hidden="true">↻</span> 翻译记录</h2>
+        <div className="quick-record-card">
+          <form className="quick-filters" onSubmit={(event) => event.preventDefault()}>
+            <input type="search" placeholder="文件名称" aria-label="文件名称" />
+            <select aria-label="翻译进度" defaultValue="">
+              <option value="" disabled>翻译进度</option>
+              <option>翻译完成</option>
+              <option>翻译失败</option>
+            </select>
+            <button className="query-btn" type="submit">查询</button>
+            <button className="reset-btn" type="reset">重置</button>
+          </form>
+          <div className="quick-table-wrap">
+            <table className="quick-table">
+              <thead>
+                <tr>
+                  <th className="quick-col-name">文件名称</th>
+                  <th>涉密等级</th>
+                  <th>日期</th>
+                  <th>语种方向</th>
+                  <th>使用引擎</th>
+                  <th>字数</th>
+                  <th>文件状态</th>
+                  <th>翻译进度</th>
+                  <th className="quick-col-actions">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quickTranslateRecords.map((record) => <QuickRecordRow key={record.id} record={record} />)}
+              </tbody>
+            </table>
+          </div>
+          <footer className="quick-pagination" aria-label="翻译记录分页">
+            <button type="button" disabled aria-label="上一页">‹</button>
+            <button className="active" type="button" aria-current="page">1</button>
+            <button type="button">2</button>
+            <button type="button">3</button>
+            <span>...</span>
+            <button type="button">11</button>
+            <button type="button" aria-label="下一页">›</button>
+            <select aria-label="每页条数" defaultValue="10条/页">
+              <option>10条/页</option>
+              <option>20条/页</option>
+            </select>
+            <label className="quick-jump">跳至 <input aria-label="跳转页码" /> 页</label>
+          </footer>
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function QuickFormatIcon({ item }: { item: { label: string; ext: string; tone: string } }) {
+  return (
+    <div className="quick-format">
+      <span className={`quick-file-icon quick-file-${item.tone}`} aria-hidden="true">{item.ext}</span>
+      <span>{item.label}</span>
+    </div>
+  );
+}
+
+function QuickRecordRow({ record }: { record: QuickTranslateRecord }) {
+  const isFailed = record.fileStatus === "failed" || record.translateStatus === "failed";
+  return (
+    <tr>
+      <td className="quick-file-name" title={record.fileName}>{record.fileName}</td>
+      <td><span className={`quick-level quick-level-${getLevelClass(record.level)}`}>{record.level}</span></td>
+      <td>{record.date}</td>
+      <td>{record.language}</td>
+      <td>{record.engine}</td>
+      <td>{record.words}</td>
+      <td>
+        {record.fileStatus === "failed" ? (
+          <span className="quick-status failed">解析失败 <span aria-hidden="true">●</span></span>
+        ) : (
+          <span className="quick-status">解析完成</span>
+        )}
+      </td>
+      <td>
+        {record.translateStatus === "failed" ? (
+          <span className="quick-status failed">翻译失败</span>
+        ) : (
+          <span className="quick-status">翻译完成</span>
+        )}
+      </td>
+      <td>
+        <div className="quick-actions">
+          {!isFailed && (
+            <>
+              <button type="button">查看</button>
+              <button type="button">导出</button>
+              <button type="button">深度编辑</button>
+            </>
+          )}
+          <button className="danger" type="button">删除</button>
+        </div>
+      </td>
+    </tr>
   );
 }
 
@@ -1742,6 +1916,7 @@ function ImportExportRecordsModal({ onClose }: { onClose: () => void }) {
 interface NewLibraryModalProps {
   libraryName: string;
   libraryLevel: SecurityLevel | "";
+  libraryRemark: string;
   uploadedFiles: UploadFileItem[];
   isDragover: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -1750,6 +1925,7 @@ interface NewLibraryModalProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onNameChange: (value: string) => void;
   onLevelChange: (value: SecurityLevel | "") => void;
+  onRemarkChange: (value: string) => void;
   onAddFiles: (fileList: FileList | File[]) => void;
   onBatchSetLevel: (event: ChangeEvent<HTMLSelectElement>) => void;
   onRemoveFile: (id: string) => void;
@@ -1777,6 +1953,7 @@ function NewLibraryModal(props: NewLibraryModalProps) {
   const {
     libraryName,
     libraryLevel,
+    libraryRemark,
     uploadedFiles,
     isDragover,
     fileInputRef,
@@ -1785,6 +1962,7 @@ function NewLibraryModal(props: NewLibraryModalProps) {
     onSubmit,
     onNameChange,
     onLevelChange,
+    onRemarkChange,
     onAddFiles,
     onBatchSetLevel,
     onRemoveFile,
@@ -1816,6 +1994,13 @@ function NewLibraryModal(props: NewLibraryModalProps) {
                 </select>
               </div>
             </label>
+            <label className="form-row form-row-note">
+              <span>备注</span>
+              <div className="form-note-control">
+                <textarea value={libraryRemark} onChange={(event) => onRemarkChange(event.target.value.slice(0, 200))} placeholder="请输入备注" maxLength={200} />
+                <small>{libraryRemark.length}/200</small>
+              </div>
+            </label>
           </div>
           <div className="modal-upload-panel">
             <UploadPanel
@@ -1845,17 +2030,21 @@ function NewLibraryModal(props: NewLibraryModalProps) {
 function EditLibraryModal({
   libraryName,
   libraryLevel,
+  libraryRemark,
   onClose,
   onSubmit,
   onNameChange,
   onLevelChange,
+  onRemarkChange,
 }: {
   libraryName: string;
   libraryLevel: SecurityLevel | "";
+  libraryRemark: string;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onNameChange: (value: string) => void;
   onLevelChange: (value: SecurityLevel | "") => void;
+  onRemarkChange: (value: string) => void;
 }) {
   const canConfirm = Boolean(libraryName.trim() && libraryLevel);
 
@@ -1877,6 +2066,13 @@ function EditLibraryModal({
                 <option value="">请选择</option>
                 {levelOptions.map((level) => <option key={level}>{level}</option>)}
               </select>
+            </div>
+          </label>
+          <label className="form-row form-row-note">
+            <span>备注</span>
+            <div className="form-note-control">
+              <textarea value={libraryRemark} onChange={(event) => onRemarkChange(event.target.value.slice(0, 200))} placeholder="请输入备注" maxLength={200} />
+              <small>{libraryRemark.length}/200</small>
             </div>
           </label>
         </form>
